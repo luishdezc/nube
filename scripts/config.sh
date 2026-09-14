@@ -1,0 +1,16 @@
+
+export AWS_PROFILE="${AWS_PROFILE:-nube}"
+
+BUCKET_NAME="${BUCKET_NAME:-ccg1-logging}"
+REGION="${REGION:-us-east-1}"
+export AWS_DEFAULT_REGION="$REGION"
+
+FUNCTION_NAME="${FUNCTION_NAME:-logging-system}"
+RUNTIME="${RUNTIME:-python3.13}"
+
+INPUT_PREFIX="${INPUT_PREFIX:-input/}"
+OUTPUT_PREFIX="${OUTPUT_PREFIX:-output/}"
+
+BATCHES_DIR="${BATCHES_DIR:-batches}"
+
+BATCH_SIZE="${BATCH_SIZE:-1024}"

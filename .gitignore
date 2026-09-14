@@ -1,0 +1,10 @@
+build/
+batches/
+*.zip
+notification.json
+__pycache__/
+*.pyc
+.venv/
+venv/
+data/*.log
+!data/sample.log
