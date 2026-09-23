@@ -1,4 +1,4 @@
-
+#!/bin/bash
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -7,7 +7,9 @@ source "$SCRIPT_DIR/config.sh"
 echo "Perfil : $AWS_PROFILE"
 echo "Region : $REGION"
 echo "Bucket : s3://$BUCKET_NAME"
-echo "Lambda : $FUNCTION_NAME"
+echo "Tablas : $LOGS_TABLE, $ALERTS_TABLE"
+echo "Maquina: $STATE_MACHINE_NAME"
+echo "Lambdas: $PARSER_FUNCTION, $STARTER_FUNCTION"
 echo ""
 
 if ! aws sts get-caller-identity --output table; then

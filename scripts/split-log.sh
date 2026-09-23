@@ -1,4 +1,4 @@
-
+#!/bin/bash
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -16,7 +16,6 @@ fi
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
 
-# LC_ALL=C hace que ${#line} cuente bytes y no caracteres
 export LC_ALL=C
 
 TS=$(date +%s)
@@ -26,8 +25,6 @@ BYTES=0
 CURRENT=""
 
 nuevo_batch() {
-  # El timestamp debe ser unico. Como varios batches se crean dentro del
-  # mismo segundo, si se repite simplemente avanzamos un segundo.
   TS=$(date +%s)
   if [ "$TS" -le "$LAST_TS" ]; then
     TS=$((LAST_TS + 1))
@@ -53,7 +50,6 @@ while IFS= read -r line || [ -n "$line" ]; do
   fi
 done < "$INPUT_FILE"
 
-# El ultimo batch puede quedar vacio si el corte cayo justo al final
 if [ ! -s "$CURRENT" ]; then
   rm -f "$CURRENT"
   COUNT=$((COUNT - 1))

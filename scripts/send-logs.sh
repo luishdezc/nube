@@ -1,4 +1,4 @@
-
+#!/bin/bash
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -40,5 +40,5 @@ for batch in "$DIR"/*.log; do
 done
 
 echo ""
-echo "Listo. Revisa los CSV con:"
-echo "  aws s3 ls s3://$BUCKET_NAME/$OUTPUT_PREFIX"
+echo "Listo. Revisa los logs almacenados con:"
+echo "  ./scripts/query-logs.sh LabSZ#sshd -v"

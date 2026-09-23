@@ -1,4 +1,4 @@
-
+#!/bin/bash
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -6,7 +6,40 @@ source "$SCRIPT_DIR/config.sh"
 
 SRC_DIR="src"
 BUILD_ROOT="build"
-PYTHON_BIN="${PYTHON_BIN:-python3}"
+
+if [ -z "$PYTHON_BIN" ]; then
+  for candidato in python3 python; do
+    if "$candidato" -c "import sys" >/dev/null 2>&1; then
+      PYTHON_BIN="$candidato"
+      break
+    fi
+  done
+fi
+
+if [ -z "$PYTHON_BIN" ]; then
+  echo "No se encontro Python (se probo python3 y python)." >&2
+  exit 1
+fi
+
+comprimir() {
+  local origen="$1"
+  local destino="$2"
+
+  if command -v zip >/dev/null 2>&1; then
+    (cd "$origen" && zip -qr9 "$destino" .)
+  else
+    "$PYTHON_BIN" - "$origen" "$destino" <<'PYZIP'
+import os, sys, zipfile
+origen, destino = sys.argv[1], sys.argv[2]
+with zipfile.ZipFile(destino, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+    for raiz, _, archivos in os.walk(origen):
+        for nombre in archivos:
+            ruta = os.path.join(raiz, nombre)
+            # Separadores "/" dentro del zip: Lambda corre en Linux
+            z.write(ruta, os.path.relpath(ruta, origen).replace(os.sep, "/"))
+PYZIP
+  fi
+}
 
 rm -rf "$BUILD_ROOT"
 mkdir -p "$BUILD_ROOT"
@@ -32,7 +65,11 @@ for func in "$SRC_DIR"/*; do
   if [ "$DEPS" -gt 0 ]; then
     echo "  Instalando $DEPS dependencia(s)..."
     $PYTHON_BIN -m venv "$VENV_DIR"
-    source "$VENV_DIR/bin/activate"
+    if [ -f "$VENV_DIR/bin/activate" ]; then
+      source "$VENV_DIR/bin/activate"
+    else
+      source "$VENV_DIR/Scripts/activate"
+    fi
     pip install --quiet --upgrade pip
     pip install --quiet -r "$REQ_FILE"
 
@@ -48,9 +85,7 @@ for func in "$SRC_DIR"/*; do
   cp "$func/lambda_function.py" "$PACKAGE_DIR"/
 
   rm -f "$FUNC_NAME.zip"
-  cd "$PACKAGE_DIR"
-  zip -qr9 "../../../$FUNC_NAME.zip" .
-  cd - >/dev/null
+  comprimir "$PACKAGE_DIR" "$(pwd)/$FUNC_NAME.zip"
 
   echo "  $FUNC_NAME.zip creado"
 done

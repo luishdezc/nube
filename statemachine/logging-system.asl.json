@@ -1,0 +1,188 @@
+{
+  "Comment": "Procesa un batch de logs: lo separa en lineas y clasifica cada una entre normal y sospechosa antes de escribirla en DynamoDB.",
+  "StartAt": "ParseBatch",
+  "States": {
+    "ParseBatch": {
+      "Type": "Task",
+      "Resource": "${PARSE_BATCH_ARN}",
+      "Comment": "Descarga el batch de S3 y lo separa en lineas. No escribe en DynamoDB.",
+      "ResultPath": "$.parsed",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "ProcesarLineas"
+    },
+
+    "ProcesarLineas": {
+      "Type": "Map",
+      "Comment": "Recorre las lineas del batch. Cada iteracion clasifica una linea y la escribe en la tabla que le toca.",
+      "ItemsPath": "$.parsed.lines",
+      "MaxConcurrency": 5,
+      "ItemProcessor": {
+        "ProcessorConfig": {
+          "Mode": "INLINE"
+        },
+        "StartAt": "ClasificarLinea",
+        "States": {
+          "ClasificarLinea": {
+            "Type": "Choice",
+            "Comment": "StringMatches distingue mayusculas: 'Invalid user' no coincide con 'invalid user'.",
+            "Choices": [
+              {
+                "Variable": "$.log",
+                "StringMatches": "*Invalid user*",
+                "Next": "GuardarAlertaUsuarioInvalido"
+              },
+              {
+                "Variable": "$.log",
+                "StringMatches": "*POSSIBLE BREAK-IN ATTEMPT*",
+                "Next": "GuardarAlertaBreakIn"
+              }
+            ],
+            "Default": "GuardarLog"
+          },
+
+          "GuardarAlertaUsuarioInvalido": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::dynamodb:putItem",
+            "Parameters": {
+              "TableName": "${ALERTS_TABLE}",
+              "Item": {
+                "pk": { "S.$": "$.pk" },
+                "sk": { "S.$": "$.sk" },
+                "alert_type": { "S": "INVALID_USER" },
+                "timestamp": { "S.$": "$.timestamp" },
+                "ts_iso": { "S.$": "$.ts_iso" },
+                "hostname": { "S.$": "$.hostname" },
+                "program": { "S.$": "$.program" },
+                "pid": { "N.$": "$.pid" },
+                "log": { "S.$": "$.log" },
+                "batch": { "S.$": "$.batch" },
+                "line": { "N.$": "$.line" },
+                "ingested_at": { "S.$": "$.ingested_at" },
+                "expires_at": { "N.$": "$.expires_at" }
+              }
+            },
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "DynamoDB.ProvisionedThroughputExceededException",
+                  "DynamoDB.ThrottlingException",
+                  "DynamoDB.RequestLimitExceeded",
+                  "DynamoDB.InternalServerError"
+                ],
+                "IntervalSeconds": 1,
+                "MaxAttempts": 5,
+                "BackoffRate": 2,
+                "Comment": "Throttling: se reintenta con espera creciente en lugar de tumbar toda la ejecucion."
+              },
+              {
+                "ErrorEquals": ["States.TaskFailed"],
+                "IntervalSeconds": 2,
+                "MaxAttempts": 2,
+                "BackoffRate": 2
+              }
+            ],
+            "End": true
+          },
+
+          "GuardarAlertaBreakIn": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::dynamodb:putItem",
+            "Parameters": {
+              "TableName": "${ALERTS_TABLE}",
+              "Item": {
+                "pk": { "S.$": "$.pk" },
+                "sk": { "S.$": "$.sk" },
+                "alert_type": { "S": "BREAK_IN_ATTEMPT" },
+                "timestamp": { "S.$": "$.timestamp" },
+                "ts_iso": { "S.$": "$.ts_iso" },
+                "hostname": { "S.$": "$.hostname" },
+                "program": { "S.$": "$.program" },
+                "pid": { "N.$": "$.pid" },
+                "log": { "S.$": "$.log" },
+                "batch": { "S.$": "$.batch" },
+                "line": { "N.$": "$.line" },
+                "ingested_at": { "S.$": "$.ingested_at" },
+                "expires_at": { "N.$": "$.expires_at" }
+              }
+            },
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "DynamoDB.ProvisionedThroughputExceededException",
+                  "DynamoDB.ThrottlingException",
+                  "DynamoDB.RequestLimitExceeded",
+                  "DynamoDB.InternalServerError"
+                ],
+                "IntervalSeconds": 1,
+                "MaxAttempts": 5,
+                "BackoffRate": 2
+              },
+              {
+                "ErrorEquals": ["States.TaskFailed"],
+                "IntervalSeconds": 2,
+                "MaxAttempts": 2,
+                "BackoffRate": 2
+              }
+            ],
+            "End": true
+          },
+
+          "GuardarLog": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::dynamodb:putItem",
+            "Parameters": {
+              "TableName": "${LOGS_TABLE}",
+              "Item": {
+                "pk": { "S.$": "$.pk" },
+                "sk": { "S.$": "$.sk" },
+                "timestamp": { "S.$": "$.timestamp" },
+                "ts_iso": { "S.$": "$.ts_iso" },
+                "hostname": { "S.$": "$.hostname" },
+                "program": { "S.$": "$.program" },
+                "pid": { "N.$": "$.pid" },
+                "log": { "S.$": "$.log" },
+                "batch": { "S.$": "$.batch" },
+                "line": { "N.$": "$.line" },
+                "ingested_at": { "S.$": "$.ingested_at" },
+                "expires_at": { "N.$": "$.expires_at" }
+              }
+            },
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "DynamoDB.ProvisionedThroughputExceededException",
+                  "DynamoDB.ThrottlingException",
+                  "DynamoDB.RequestLimitExceeded",
+                  "DynamoDB.InternalServerError"
+                ],
+                "IntervalSeconds": 1,
+                "MaxAttempts": 5,
+                "BackoffRate": 2
+              },
+              {
+                "ErrorEquals": ["States.TaskFailed"],
+                "IntervalSeconds": 2,
+                "MaxAttempts": 2,
+                "BackoffRate": 2
+              }
+            ],
+            "End": true
+          }
+        }
+      },
+      "End": true
+    }
+  }
+}

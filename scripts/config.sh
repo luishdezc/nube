@@ -1,3 +1,4 @@
+#!/bin/bash
 
 export AWS_PROFILE="${AWS_PROFILE:-nube}"
 
@@ -5,11 +6,18 @@ BUCKET_NAME="${BUCKET_NAME:-ccg1-logging}"
 REGION="${REGION:-us-east-1}"
 export AWS_DEFAULT_REGION="$REGION"
 
-FUNCTION_NAME="${FUNCTION_NAME:-logging-system}"
 RUNTIME="${RUNTIME:-python3.13}"
 
+STATE_MACHINE_NAME="${STATE_MACHINE_NAME:-logging-system}"
+STARTER_FUNCTION="${STARTER_FUNCTION:-start_execution}"
+PARSER_FUNCTION="${PARSER_FUNCTION:-parse_batch}"
+
+LOGS_TABLE="${LOGS_TABLE:-Logs}"
+ALERTS_TABLE="${ALERTS_TABLE:-SecurityAlerts}"
+TTL_DAYS="${TTL_DAYS:-7}"
+LOG_YEAR="${LOG_YEAR:-2025}"
+
 INPUT_PREFIX="${INPUT_PREFIX:-input/}"
-OUTPUT_PREFIX="${OUTPUT_PREFIX:-output/}"
 
 BATCHES_DIR="${BATCHES_DIR:-batches}"
 

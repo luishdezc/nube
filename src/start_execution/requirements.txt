@@ -1,0 +1,1 @@
+# El runtime de Lambda ya incluye boto3, por eso no es necesario empaquetarlo.

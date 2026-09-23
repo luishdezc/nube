@@ -1,4 +1,4 @@
-
+#!/bin/bash
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,7 +13,6 @@ else
 fi
 
 aws s3api put-object --bucket "$BUCKET_NAME" --key "$INPUT_PREFIX" >/dev/null
-aws s3api put-object --bucket "$BUCKET_NAME" --key "$OUTPUT_PREFIX" >/dev/null
 
 echo "Bucket listo:"
 aws s3 ls "s3://$BUCKET_NAME/"
