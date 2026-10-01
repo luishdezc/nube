@@ -39,11 +39,10 @@ texto = open(origen, encoding="utf-8").read()
 for clave in ("PARSE_BATCH_ARN", "LOGS_TABLE", "ALERTS_TABLE"):
     texto = texto.replace("${" + clave + "}", os.environ[clave])
 
-# Si quedo algun placeholder sin sustituir, mejor fallar aqui que en AWS.
 if "${" in texto:
     sys.exit(f"Quedaron placeholders sin sustituir en {destino}")
 
-json.loads(texto)  # valida que siga siendo JSON valido
+json.loads(texto)
 open(destino, "w", encoding="utf-8").write(texto)
 print(f"  {destino} generado y validado")
 PY
@@ -71,7 +70,6 @@ fi
 
 echo "  $SM_ARN"
 
-# start_execution necesita saber a que maquina llamar.
 echo "Pasando el ARN a $STARTER_FUNCTION..."
 aws lambda update-function-configuration \
   --function-name "$STARTER_FUNCTION" \

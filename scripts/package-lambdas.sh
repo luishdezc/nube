@@ -35,7 +35,6 @@ with zipfile.ZipFile(destino, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
     for raiz, _, archivos in os.walk(origen):
         for nombre in archivos:
             ruta = os.path.join(raiz, nombre)
-            # Separadores "/" dentro del zip: Lambda corre en Linux
             z.write(ruta, os.path.relpath(ruta, origen).replace(os.sep, "/"))
 PYZIP
   fi

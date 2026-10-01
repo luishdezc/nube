@@ -41,7 +41,6 @@ nuevo_batch
 
 while IFS= read -r line || [ -n "$line" ]; do
   printf '%s\n' "$line" >> "$CURRENT"
-  # +1 por el salto de linea
   BYTES=$((BYTES + ${#line} + 1))
 
   if [ "$BYTES" -ge "$LIMIT" ]; then

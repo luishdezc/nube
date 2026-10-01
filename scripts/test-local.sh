@@ -14,9 +14,8 @@ import os
 import sys
 import types
 
-# boto3 existe dentro de Lambda, pero no siempre en la maquina local.
 try:
-    import boto3  # noqa: F401
+    import boto3
 except ImportError:
     stub = types.ModuleType("boto3")
     stub.client = lambda *a, **k: None
@@ -37,7 +36,6 @@ with open(os.path.join("statemachine", "logging-system.asl.json"), encoding="utf
 estados = asl["States"]["ProcesarLineas"]["ItemProcessor"]["States"]
 choice = estados["ClasificarLinea"]
 
-
 def evaluar_choice(linea):
     """Aplica las reglas del Choice tal como estan en el JSON."""
     for regla in choice["Choices"]:
@@ -46,8 +44,6 @@ def evaluar_choice(linea):
             return regla["Next"]
     return choice["Default"]
 
-
-# --- 1. Clasificacion ---------------------------------------------------
 conteo = {}
 print(f"{'ESTADO':<32} {'TABLA':<16} LOG")
 print("-" * 100)
@@ -63,7 +59,6 @@ print()
 for estado, n in sorted(conteo.items()):
     print(f"  {estado:<32} {n:>4} lineas  -> {estados[estado]['Parameters']['TableName']}")
 
-# --- 2. Los campos del Item existen y tienen el tipo correcto ------------
 print("\nValidando los Item del putItem contra la salida de parse_batch...")
 errores = []
 
@@ -73,7 +68,7 @@ for nombre, estado in estados.items():
     for campo, definicion in estado["Parameters"]["Item"].items():
         for tipo, valor in definicion.items():
             if not tipo.endswith(".$"):
-                continue  # valor fijo, como alert_type
+                continue
             origen = valor.removeprefix("$.")
             for linea in lineas:
                 if origen not in linea:
@@ -89,7 +84,6 @@ for nombre, estado in estados.items():
                     errores.append(f"{nombre}.{campo}: '{origen}'='{dato}' no es numero")
                     break
 
-# --- 3. Llaves unicas ---------------------------------------------------
 llaves = {(l["pk"], l["sk"]) for l in lineas}
 if len(llaves) != len(lineas):
     errores.append(f"llaves repetidas: {len(lineas)} lineas pero {len(llaves)} llaves unicas")

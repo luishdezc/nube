@@ -13,8 +13,6 @@ import sys
 lineas = int(sys.argv[1])
 salida = sys.argv[2]
 
-# Semilla fija: el log generado es siempre el mismo, asi todo el equipo
-# trabaja con los mismos datos y los conteos de la query son comparables.
 random.seed(42)
 
 HOST = "LabSZ"
@@ -22,7 +20,6 @@ USUARIOS = ["webmaster", "admin", "root", "test", "oracle", "postgres", "ubuntu"
 IPS = ["173.234.31.186", "103.99.0.122", "5.36.59.76", "212.83.146.135", "183.62.140.253"]
 PUERTOS = lambda: random.randint(1024, 65535)
 
-# Plantillas tomadas de los tipos de evento reales del dataset de loghub
 PLANTILLAS = [
     "Invalid user {user} from {ip}",
     "input_userauth_request: invalid user {user} [preauth]",
@@ -34,8 +31,6 @@ PLANTILLAS = [
     "Accepted password for {user} from {ip} port {port} ssh2",
 ]
 
-# El reloj avanza unos segundos por linea para que los timestamps
-# no se repitan demasiado y las queries por rango tengan sentido.
 dia, hora, minuto, segundo = 10, 6, 55, 46
 pid = 24200
 
@@ -52,7 +47,6 @@ with open(salida, "w", encoding="utf-8") as f:
             hora -= 24
             dia += 1
 
-        # Cada cierto numero de lineas cambia la sesion (y por lo tanto el pid)
         if i % 7 == 0:
             pid += random.randint(1, 5)
 

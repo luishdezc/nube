@@ -9,7 +9,8 @@ echo "Region : $REGION"
 echo "Bucket : s3://$BUCKET_NAME"
 echo "Tablas : $LOGS_TABLE, $ALERTS_TABLE"
 echo "Maquina: $STATE_MACHINE_NAME"
-echo "Lambdas: $PARSER_FUNCTION, $STARTER_FUNCTION"
+echo "API    : $API_NAME"
+echo "Lambdas: $PARSER_FUNCTION, $STARTER_FUNCTION, $ALERTS_FUNCTION, $LOGS_FUNCTION"
 echo ""
 
 if ! aws sts get-caller-identity --output table; then
